@@ -8,7 +8,7 @@
 
 const request = require('supertest');
 const express = require('express');
-const validateInternshipPeriod = require('../src/middleware/validateInternshipPeriod');
+const validateInternshipPeriod = require('../../src/middleware/validateInternshipPeriod');
 
 // Route test đơn giản để gắn middleware
 const app = express();
