@@ -7,12 +7,13 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "test": "jest --verbose --forceExit --detectOpenHandles --runInBand",
+    "test:auth": "jest --verbose --runInBand test/unit/TC001_TC020_auth.test.js",
     "test:coverage": "jest --coverage --verbose --forceExit --detectOpenHandles --runInBand",
     "lint": "echo \"No linters configured\""
   },
   "jest": {
     "testEnvironment": "node",
-    "testMatch": ["**/__tests__/**/*.test.js"],
+    "testMatch": ["**/__tests__/**/*.test.js", "**/test/unit/**/*.test.js"],
     "coverageDirectory": "coverage",
     "coveragePathIgnorePatterns": ["/node_modules/", "/scripts/"]
   },
