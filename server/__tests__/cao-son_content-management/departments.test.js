@@ -16,9 +16,9 @@ const {
   pool,
   ADMIN_TOKEN,
   createCustomApp,
-} = require('./setup');
+} = require('../setup');
 
-const departmentsRouter = require('../src/routes/departments');
+const departmentsRouter = require('../../src/routes/departments');
 const departmentsApp = createCustomApp('/api/departments', departmentsRouter);
 
 let createdDepartmentId;

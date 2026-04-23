@@ -16,9 +16,9 @@ const {
   pool,
   ADMIN_TOKEN,
   createCustomApp,
-} = require('./setup');
+} = require('../setup');
 
-const majorsRouter = require('../src/routes/majors');
+const majorsRouter = require('../../src/routes/majors');
 const majorsApp = createCustomApp('/api/majors', majorsRouter);
 
 let createdMajorId;

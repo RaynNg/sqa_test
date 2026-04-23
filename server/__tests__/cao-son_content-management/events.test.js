@@ -19,7 +19,7 @@ const {
   ADMIN_TOKEN,
   createCrudApp,
   rollbackTable,
-} = require('./setup');
+} = require('../setup');
 
 /* ---- Tạo Express app giống cấu hình trong server.js ---- */
 const eventsApp = createCrudApp('/api/events', {

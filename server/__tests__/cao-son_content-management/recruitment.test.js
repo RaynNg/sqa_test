@@ -17,7 +17,7 @@ const {
   ADMIN_TOKEN,
   createCrudApp,
   rollbackTable,
-} = require('./setup');
+} = require('../setup');
 
 const recruitmentApp = createCrudApp('/api/recruitment', {
   tableName: 'recruitment_posts',

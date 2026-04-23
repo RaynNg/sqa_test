@@ -14,7 +14,7 @@ const request = require('supertest');
 const {
   STUDENT_TOKEN,
   createCrudApp,
-} = require('./setup');
+} = require('../setup');
 
 /* Dùng /api/news làm đại diện cho admin endpoint (crudFactory protect) */
 const authTestApp = createCrudApp('/api/news', {
