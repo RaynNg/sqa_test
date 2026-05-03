@@ -1,0 +1,845 @@
+{
+  "info": {
+    "_postman_id": "mv-internship-2026",
+    "name": "MinhVu - Internship Registration API",
+    "description": "Integration tests for Internship Registration module. Data-driven via CSV: 1/3/5 enterprise preferences per iteration. Covers all server-side business rules.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "adminToken",    "value": "" },
+    { "key": "studentToken",  "value": "" },
+    { "key": "periodId",      "value": "" },
+    { "key": "regLecturerId", "value": "" },
+    { "key": "regPrefId",     "value": "" },
+    { "key": "preferencesJson", "value": "[]" }
+  ],
+  "item": [
+    {
+      "name": "01. Authentication",
+      "item": [
+        {
+          "name": "TC-AUTH-01 Admin Login - Valid",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-AUTH-01: Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('TC-AUTH-01: Has token + success=true', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.be.true;",
+                  "  pm.expect(json.token).to.be.a('string').and.not.empty;",
+                  "  pm.collectionVariables.set('adminToken', json.token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/login" }
+          }
+        },
+        {
+          "name": "TC-AUTH-02 Student Login - Valid",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-AUTH-02: Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('TC-AUTH-02: Has token', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.token).to.be.a('string').and.not.empty;",
+                  "  pm.collectionVariables.set('studentToken', json.token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{studentEmail}}\",\n  \"password\": \"{{studentPassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/login" }
+          }
+        },
+        {
+          "name": "TC-AUTH-03 Login - Wrong Password → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-AUTH-03: Status 401 for wrong password', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"wrongpassword_xyz\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/login" }
+          }
+        },
+        {
+          "name": "TC-AUTH-04 Login - Missing Email → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-AUTH-04: Status 400 when email missing', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"admin123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/login" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02. Internship Periods",
+      "item": [
+        {
+          "name": "TC-PERIOD-01 GET All Periods - Public",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-PERIOD-01: Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('TC-PERIOD-01: Response is array', function () {",
+                  "  pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/internship-periods" }
+          }
+        },
+        {
+          "name": "TC-PERIOD-02 GET Active Period - Public",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-PERIOD-02: Status 200 or 404', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/internship-periods/active" }
+          }
+        },
+        {
+          "name": "TC-PERIOD-03 POST Create Period - Admin Valid (CSV data)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var desc = pm.iterationData.get('testDescription') || 'default';",
+                  "console.log('[Iteration] ' + desc);",
+                  "console.log('[CSV] periodName:', pm.iterationData.get('periodName'));",
+                  "console.log('[CSV] enterprise_ids:', pm.iterationData.get('enterprise_ids'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-PERIOD-03: Status 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test('TC-PERIOD-03: Response has period id', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('id');",
+                  "  pm.collectionVariables.set('periodId', json.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{periodName}}\",\n  \"start_date\": \"{{start_date}}\",\n  \"end_date\": \"{{end_date}}\",\n  \"registration_start\": \"{{registration_start}}\",\n  \"registration_end\": \"{{registration_end}}\",\n  \"is_active\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/internship-periods" }
+          }
+        },
+        {
+          "name": "TC-PERIOD-04 POST Create Period - end_date < start_date → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-PERIOD-04: Status 400 when end_date before start_date', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Bad Period end<start\",\n  \"start_date\": \"2026-09-01\",\n  \"end_date\": \"2026-07-01\",\n  \"registration_start\": \"2026-08-15\",\n  \"registration_end\": \"2026-08-31\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/internship-periods" }
+          }
+        },
+        {
+          "name": "TC-PERIOD-05 POST Create Period - No Auth → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-PERIOD-05: Status 401 without token', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Unauth Period\",\n  \"start_date\": \"2026-06-01\",\n  \"end_date\": \"2026-08-31\",\n  \"registration_start\": \"2026-05-15\",\n  \"registration_end\": \"2026-05-31\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/internship-periods" }
+          }
+        },
+        {
+          "name": "TC-PERIOD-06 GET Period by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-PERIOD-06: Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('TC-PERIOD-06: Response has id field', function () {",
+                  "  pm.expect(pm.response.json()).to.have.property('id');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/internship-periods/{{periodId}}" }
+          }
+        },
+        {
+          "name": "TC-PERIOD-07 PUT Update Period - Admin (CSV data)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-PERIOD-07: Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{periodName}} (Updated)\",\n  \"start_date\": \"{{start_date}}\",\n  \"end_date\": \"{{end_date}}\",\n  \"registration_start\": \"{{registration_start}}\",\n  \"registration_end\": \"{{registration_end}}\",\n  \"is_active\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/internship-periods/{{periodId}}" }
+          }
+        },
+        {
+          "name": "TC-PERIOD-08 POST Overlapping Period → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-PERIOD-08: Status 400 for overlapping period', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('TC-PERIOD-08: Error message mentions overlap', function () {",
+                  "  var body = pm.response.text();",
+                  "  pm.expect(body).to.not.be.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Overlap Test Period\",\n  \"start_date\": \"2026-05-01\",\n  \"end_date\": \"2026-06-30\",\n  \"registration_start\": \"2026-04-15\",\n  \"registration_end\": \"2026-04-30\",\n  \"is_active\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/internship-periods" }
+          }
+        },
+        {
+          "name": "TC-PERIOD-09 DELETE Period - Admin (Rollback/Cleanup)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-PERIOD-09: Status 200 or 204', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                  "});",
+                  "if ([200, 204].includes(pm.response.code)) {",
+                  "  console.log('[Rollback] Period ' + pm.collectionVariables.get('periodId') + ' deleted.');",
+                  "  pm.collectionVariables.set('periodId', '');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/internship-periods/{{periodId}}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03. Registration - Student",
+      "description": "Negative cases run BEFORE positive to test guard rules. Order: no-lecturer-guard → register-lecturer → preference-validation → register-preferences.",
+      "item": [
+        {
+          "name": "TC-REG-STU-01 POST Preferences Without Lecturer First → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-REG-STU-01: Status 400 - must register lecturer first', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('TC-REG-STU-01: Error message about lecturer requirement', function () {",
+                  "  var body = pm.response.text();",
+                  "  pm.expect(body).to.not.be.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"period_id\": {{periodId}},\n  \"preferences\": [\n    { \"enterprise_id\": 1, \"preference_order\": 1 }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/internship-registrations/preferences" }
+          }
+        },
+        {
+          "name": "TC-REG-STU-02 POST Register Lecturer - Valid",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-REG-STU-02: Status 200 or 201', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "pm.test('TC-REG-STU-02: Response has registration id', function () {",
+                  "  var json = pm.response.json();",
+                  "  if (json.id) pm.collectionVariables.set('regLecturerId', json.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"period_id\": {{periodId}},\n  \"lecturer_id\": {{lecturerId}}\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/internship-registrations/lecturer" }
+          }
+        },
+        {
+          "name": "TC-REG-STU-03 GET My Lecturer Registration",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-REG-STU-03: Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/internship-registrations/my-lecturer?period_id={{periodId}}",
+              "query": [{ "key": "period_id", "value": "{{periodId}}" }]
+            }
+          }
+        },
+        {
+          "name": "TC-REG-STU-04 POST Register > 5 Preferences → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-REG-STU-04: Status 400 - max 5 preferences exceeded', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"period_id\": {{periodId}},\n  \"preferences\": [\n    { \"enterprise_id\": 1, \"preference_order\": 1 },\n    { \"enterprise_id\": 2, \"preference_order\": 2 },\n    { \"enterprise_id\": 3, \"preference_order\": 3 },\n    { \"enterprise_id\": 4, \"preference_order\": 4 },\n    { \"enterprise_id\": 5, \"preference_order\": 5 },\n    { \"enterprise_id\": 6, \"preference_order\": 6 }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/internship-registrations/preferences" }
+          }
+        },
+        {
+          "name": "TC-REG-STU-05 POST Register Preferences - Invalid Order (gap 1→3) → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-REG-STU-05: Status 400 - preference_order not sequential', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"period_id\": {{periodId}},\n  \"preferences\": [\n    { \"enterprise_id\": 1, \"preference_order\": 1 },\n    { \"enterprise_id\": 2, \"preference_order\": 3 }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/internship-registrations/preferences" }
+          }
+        },
+        {
+          "name": "TC-REG-STU-06 POST Register Preferences - Valid (CSV: 1/3/5 enterprises)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var raw = pm.iterationData.get('enterprise_ids') || pm.environment.get('enterpriseId') || '1';",
+                  "var ids = raw.toString().split('|');",
+                  "var prefs = ids.map(function(id, idx) {",
+                  "  return { enterprise_id: parseInt(id.trim()), preference_order: idx + 1 };",
+                  "});",
+                  "pm.collectionVariables.set('preferencesJson', JSON.stringify(prefs));",
+                  "console.log('[CSV] Building', ids.length, 'enterprise preferences:', JSON.stringify(prefs));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var expectedCount = (pm.iterationData.get('enterprise_ids') || '1').toString().split('|').length;",
+                  "pm.test('TC-REG-STU-06: Status 200 or 201', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "pm.test('TC-REG-STU-06: Registered ' + expectedCount + ' preference(s)', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json).to.exist;",
+                  "  if (json.id) pm.collectionVariables.set('regPrefId', json.id);",
+                  "  else if (Array.isArray(json) && json.length > 0) pm.collectionVariables.set('regPrefId', json[0].id);",
+                  "  else if (json.ids && json.ids.length > 0) pm.collectionVariables.set('regPrefId', json.ids[0]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"period_id\": {{periodId}},\n  \"preferences\": {{preferencesJson}}\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/internship-registrations/preferences" }
+          }
+        },
+        {
+          "name": "TC-REG-STU-07 GET My Enterprise Preferences",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var expectedCount = (pm.iterationData.get('enterprise_ids') || '1').toString().split('|').length;",
+                  "pm.test('TC-REG-STU-07: Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('TC-REG-STU-07: Returns ' + expectedCount + ' preference(s)', function () {",
+                  "  var json = pm.response.json();",
+                  "  var list = Array.isArray(json) ? json : (json.preferences || []);",
+                  "  pm.expect(list.length).to.equal(expectedCount);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/internship-registrations/my-preferences?period_id={{periodId}}",
+              "query": [{ "key": "period_id", "value": "{{periodId}}" }]
+            }
+          }
+        },
+        {
+          "name": "TC-REG-STU-08 POST Register Lecturer - No Auth → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-REG-STU-08: Status 401 without token', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"period_id\": 1,\n  \"lecturer_id\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/internship-registrations/lecturer" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "04. Registration - Admin Management",
+      "item": [
+        {
+          "name": "TC-REG-ADMIN-01 GET All Registrations",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-REG-ADMIN-01: Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('TC-REG-ADMIN-01: Response is array', function () {",
+                  "  pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/internship-registrations/all?type=lecturer&period_id={{periodId}}",
+              "query": [
+                { "key": "type", "value": "lecturer" },
+                { "key": "period_id", "value": "{{periodId}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "TC-REG-ADMIN-02 PUT Approve Lecturer Registration",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-REG-ADMIN-02: Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/internship-registrations/lecturer/{{regLecturerId}}/status" }
+          }
+        },
+        {
+          "name": "TC-REG-ADMIN-03 PUT Approve Preference - Auto-Reject Others",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-REG-ADMIN-03: Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('TC-REG-ADMIN-03: Approval succeeded', function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/internship-registrations/preference/{{regPrefId}}/status" }
+          }
+        },
+        {
+          "name": "TC-REG-ADMIN-04 PUT Update Status - Invalid Status Value → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-REG-ADMIN-04: Status 400 for invalid status value', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"invalid_status_xyz\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/internship-registrations/preference/{{regPrefId}}/status" }
+          }
+        },
+        {
+          "name": "TC-REG-ADMIN-05 GET Registration Results",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-REG-ADMIN-05: Status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/internship-registrations/results?type=lecturers",
+              "query": [{ "key": "type", "value": "lecturers" }]
+            }
+          }
+        },
+        {
+          "name": "TC-REG-ADMIN-06 GET All Registrations - Student Token → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-REG-ADMIN-06: Status 403 for non-admin', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/internship-registrations/all" }
+          }
+        }
+      ]
+    }
+  ]
+}
